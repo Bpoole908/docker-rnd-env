@@ -9,7 +9,8 @@ ARG HOST_UID="1000"
 ARG HOST_GID="100"
 
 RUN apt-get update && apt-get install -yq --no-install-recommends \
-    git \ 
+    git \
+    curl \
     wget \
     ca-certificates \
     locales \

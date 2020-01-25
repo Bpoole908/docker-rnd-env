@@ -2,7 +2,7 @@ version=${1-latest}
 user=${2-1000:100}  
 
 alias make="docker run \
-    --volume=$(pwd):/home/dev/workspace \
+    --volume=$(pwd)/mnt:/home/dev/workspace \
     --volume=/tmp/.X11-unix:/tmp/.X11-unix \
     --volume=/etc/localtime:/etc/localtime:ro \
     --name rnd-env \
@@ -15,7 +15,7 @@ alias make="docker run \
     bpoole908/base-rnd-env:$version"
 
 alias attach="docker run \
-    --volume=$(pwd):/home/dev/workspace \
+    --volume=$(pwd)/mnt:/home/dev/workspace \
     --volume=/tmp/.X11-unix:/tmp/.X11-unix \
     --volume=/etc/localtime:/etc/localtime:ro \
     --rm \
