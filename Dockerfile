@@ -2,21 +2,30 @@ ARG UBUNTU_VERSION=18.04
 ARG CUDA=10.1
 ARG CUDNN=7.6.5.32
 
-FROM nvidia/cuda:${CUDA}-cudnn7-runtime-ubuntu${UBUNTU_VERSION}
+FROM nvidia/cuda:${CUDA}-cudnn7-devel-ubuntu${UBUNTU_VERSION}
 
 ARG HOST_USER="dev"
 ARG HOST_UID="1000"
 ARG HOST_GID="100"
 
 RUN apt-get update && apt-get install -yq --no-install-recommends \
-    git \
-    curl \
+    git \ 
     wget \
+    bzip2 \
     ca-certificates \
+    sudo \
     locales \
     fonts-liberation \
     libopenmpi-dev \
+    openmpi-bin \
+    libgtk2.0-0 \
+    xvfb \
+    libgconf-2-4 \
+    libxtst6 \
     gcc \
+    libnvinfer6=6.0.1-1+cuda10.1 \
+    libnvinfer-dev=6.0.1-1+cuda10.1 \
+    libnvinfer-plugin6=6.0.1-1+cuda10.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -41,19 +50,22 @@ RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERS
     /bin/bash Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -b -p $CONDA_DIR && \
     rm Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh
 
+COPY ./conda_requirements.txt ./conda_requirements.txt
+
 RUN conda config --system --prepend channels conda-forge \
     && conda config --system --prepend channels anaconda \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true  \
     && conda install --quiet --yes conda="${CONDA_VERSION%.*}.*" \
+    && conda install --yes --file conda_requirements.txt \
     && conda update --all --quiet --yes \
     && conda clean --all -f -y 
 
-COPY ./requirements.txt ./requirements.txt
+COPY ./pip_requirements.txt ./pip_requirements.txt
 
 RUN pip install --upgrade pip \
-    && pip install  -r requirements.txt --no-cache-dir \
-    && rm requirements.txt
+    && pip install  -r pip_requirements.txt --no-cache-dir \
+    && rm pip_requirements.txt
     
 # Move all permissions to HOST_USER
 RUN chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/* \
