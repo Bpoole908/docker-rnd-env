@@ -23,9 +23,6 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
     libgconf-2-4 \
     libxtst6 \
     gcc \
-    libnvinfer6=6.0.1-1+cuda10.1 \
-    libnvinfer-dev=6.0.1-1+cuda10.1 \
-    libnvinfer-plugin6=6.0.1-1+cuda10.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
