@@ -26,6 +26,7 @@ WORKDIR /home/$HOST_USER/workspace
 
 RUN apt-get update && apt-get install -yq --no-install-recommends \
     vim \
+    ssh \
     git \ 
     curl \
     bzip2 \
