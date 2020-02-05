@@ -8,9 +8,26 @@ ARG HOST_USER="dev"
 ARG HOST_UID="1000"
 ARG HOST_GID="100"
 
+ENV HOME=/home/$HOST_USER \
+    MINICONDA_VERSION=4.6.14 \
+    CONDA_VERSION=4.6.14 \
+    CONDA_DIR=/home/$HOST_USER/miniconda
+# PATH must have be on its own line or CONDA_DIR will not be recognized
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+RUN groupadd -r $HOST_USER \
+    && useradd -d /home/$HOST_USER -g $HOST_GID -m -r -u $HOST_UID $HOST_USER \
+    && mkdir $HOME/workspace/ \
+    && chown $HOST_USER:$HOST_GID $HOME/workspace/
+
+# If you want to make a directory to mount to create one inside workspace OR 
+# mount directly to workspace.
+WORKDIR /home/$HOST_USER/workspace
+
 RUN apt-get update && apt-get install -yq --no-install-recommends \
+    vim \
     git \ 
-    wget \
+    curl \
     bzip2 \
     ca-certificates \
     sudo \
@@ -24,30 +41,19 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
     libxtst6 \
     gcc \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sSL https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -o miniconda.sh \
+    && chown $HOST_USER:$HOST_GID ./miniconda.sh  
 
-# TODO: Works only sometimes and being build - find out why.
-RUN sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' /etc/skel/.bashrc
+USER $HOST_USER
+# RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
+#     /bin/bash Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -b -p $CONDA_DIR && \
+#     rm Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh
 
-RUN groupadd -r $HOST_USER \
-    && useradd -d /home/$HOST_USER -g $HOST_GID -m -r -u $HOST_UID $HOST_USER
+RUN /bin/bash ./miniconda.sh -bp $CONDA_DIR \
+    && rm miniconda.sh
 
-# If you want to make a directory to mount to create one inside workspace OR 
-# mount directly to workspace.
-WORKDIR /home/$HOST_USER/workspace
-
-ENV HOME=/home/$HOST_USER \
-    MINICONDA_VERSION=4.6.14 \
-    CONDA_VERSION=4.6.14 \
-    CONDA_DIR=/home/$HOST_USER/miniconda
-# PATH must have be on its own line or CONDA_DIR will not be recognized
-ENV PATH=$CONDA_DIR/bin:$PATH
-
-RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
-    /bin/bash Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -b -p $CONDA_DIR && \
-    rm Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh
-
-COPY ./conda_requirements.txt ./conda_requirements.txt
+COPY --chown=$HOST_USER ./conda_requirements.txt ./conda_requirements.txt
 
 RUN conda config --system --prepend channels conda-forge \
     && conda config --system --prepend channels anaconda \
@@ -58,16 +64,18 @@ RUN conda config --system --prepend channels conda-forge \
     && conda update --all --quiet --yes \
     && conda clean --all -f -y 
 
-COPY ./pip_requirements.txt ./pip_requirements.txt
+COPY --chown=$HOST_USER ./pip_requirements.txt ./pip_requirements.txt
 
 RUN pip install --upgrade pip \
     && pip install  -r pip_requirements.txt --no-cache-dir \
     && rm pip_requirements.txt
     
-# Move all permissions to HOST_USER
-RUN chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/* \
-    &&  chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/.[^.]*
+# # Move all permissions to HOST_USER
+# RUN chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/* \
+#     &&  chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/.[^.]*
 
-USER $HOST_USER
+ENV SHELL=/bin/bash
+
+RUN echo 'export PS1="\[🐳\] \[\033[1;36m\]\u@\[\033[1;32m\]\h:\[\033[1;34m\]\w\[\033[0m\]\$ "' >> $HOME/.bashrc
 
 CMD bash
