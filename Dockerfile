@@ -1,6 +1,8 @@
 ARG UBUNTU_VERSION=18.04
 ARG CUDA=10.1
 ARG CUDNN=7.6.5.32
+# Cuda compat with host:
+# https://stackoverflow.com/questions/57015346/can-i-run-a-docker-container-with-cuda-10-when-host-has-cuda-9
 
 FROM nvidia/cuda:${CUDA}-cudnn7-devel-ubuntu${UBUNTU_VERSION}
 
@@ -77,6 +79,6 @@ RUN pip install --upgrade pip \
 
 ENV SHELL=/bin/bash
 
-RUN echo 'export PS1="\[🐳\] \[\033[1;36m\]\u@\[\033[1;32m\]\h:\[\033[1;34m\]\w\[\033[0m\]\$ "' >> $HOME/.bashrc
+RUN echo 'export PS1="🐳 \[\033[1;36m\]\u@\[\033[1;32m\]\h:\[\033[1;34m\]\w\[\033[0m\]\$ "' >> $HOME/.bashrc
 
 CMD bash
