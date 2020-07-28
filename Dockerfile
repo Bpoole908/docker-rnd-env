@@ -70,14 +70,16 @@ RUN conda config --system --prepend channels conda-forge \
 COPY --chown=$HOST_USER ./pip_requirements.txt ./pip_requirements.txt
 
 RUN pip install --upgrade pip \
-    && pip install  -r pip_requirements.txt --no-cache-dir \
+    && pip install --user -r pip_requirements.txt --no-cache-dir \
     && rm pip_requirements.txt
     
 # # Move all permissions to HOST_USER
 # RUN chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/* \
 #     &&  chown -R $HOST_USER:$HOST_GID /home/$HOST_USER/.[^.]*
 
-ENV SHELL=/bin/bash
+# TODO: Move python path setting before python install to avoid warning messages
+ENV PATH=$HOME/.local/bin:${PATH} \ 
+    SHELL=/bin/bash
 
 RUN echo 'export PS1="🐳 \[\033[1;36m\]\u@\[\033[1;32m\]\h:\[\033[1;34m\]\w\[\033[0m\]\$ "' >> $HOME/.bashrc
 
